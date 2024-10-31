@@ -9,8 +9,7 @@ T = TypeVar('T')
 
 def find_by_id(model: type[T], entity_id: int) -> Maybe[T]:
     with session_maker() as session:
-        res = Maybe.from_optional(session.query(model).filter(getattr(model, get_primary_key_name(model)) == entity_id).first())
-        return res
+        return Maybe.from_optional(session.query(model).filter(getattr(model, get_primary_key_name(model)) == entity_id).first())
 
 
 def find_all(model: type[T], limit: int = 100) -> List[T]:
@@ -45,7 +44,7 @@ def insert_range(entities: List[T]) -> Result[List[T], str]:
 def update(model: type[T], entity_id: int, updated_entity: T) -> Result[T, str]:
     with session_maker() as session:
         try:
-            entity_to_update = find_by_id(model, entity_id).value_or(None)
+            entity_to_update = session.query(model).get(entity_id)
             if not entity_to_update:
                 return Failure(f"No {model.__name__} with id: {entity_id} found")
 
@@ -58,7 +57,6 @@ def update(model: type[T], entity_id: int, updated_entity: T) -> Result[T, str]:
         except SQLAlchemyError as e:
             session.rollback()
             return Failure(str(e))
-
 
 
 def delete(model: type[T], entity_id: int) -> Result[T, str]:
