@@ -2,6 +2,7 @@ import app.db.repositories.generic_repository as generic_repo
 from app.db.database import session_maker
 from app.db.models import Mission, Target, City
 from datetime import date
+from sqlalchemy.sql.expression import func
 
 current_type = Mission
 
@@ -61,3 +62,8 @@ def find_missions_by_target_type_id(target_type_id: int):
             .join(current_type.target)
             .filter(Target.target_type_id == target_type_id)
         )
+
+
+def get_max_mission_id():
+    with session_maker() as session:
+        return session.query(func.max(current_type.mission_id)).scalar()
