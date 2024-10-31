@@ -1,4 +1,5 @@
 import app.db.repositories.generic_repository as generic_repo
+from app.db.database import session_maker
 from app.db.models import City
 
 current_type = City
@@ -26,3 +27,8 @@ def update(city_id: int, updated_city: City):
 
 def delete(city_id: int):
     return generic_repo.delete(current_type, city_id)
+
+
+def find_many_by_country_id(country_id):
+    with session_maker() as session:
+        return session.query(City).filter(City.country_id == country_id).limit(100).all()

@@ -8,14 +8,15 @@ T = TypeVar('T')
 
 
 def find_by_id(model: type[T], entity_id: int) -> Maybe[T]:
+    column_name = model.__name__.lower() + "_id"
     with session_maker() as session:
-        res = Maybe.from_optional(session.query(model).filter(model.id == entity_id).first())
+        res = Maybe.from_optional(session.query(model).filter(getattr(model, column_name) == entity_id).first())
         return res
 
 
 def find_all(model: type[T], limit: int = 100) -> List[T]:
     with session_maker() as session:
-        res = session.query(model).all()
+        res = session.query(model).limit(limit).all()
         return res
 
 
