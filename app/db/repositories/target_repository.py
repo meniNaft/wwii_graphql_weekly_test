@@ -2,6 +2,8 @@ import app.db.repositories.generic_repository as generic_repo
 from app.db.database import session_maker
 from app.db.models import Target
 from returns.maybe import Maybe
+from sqlalchemy.sql.expression import func
+
 
 current_type = Target
 
@@ -43,3 +45,8 @@ def find_many_by_target_type_id(target_type_id):
 def find_one_by_mission_id(mission_id):
     with session_maker() as session:
         return Maybe.from_optional(session.query(Target).filter(Target.mission_id == mission_id).first())
+
+
+def get_max_target_id():
+    with session_maker() as session:
+        return session.query(func.max(current_type.target_id)).scalar()

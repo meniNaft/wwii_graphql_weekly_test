@@ -9,6 +9,8 @@ T = TypeVar('T')
 
 def find_by_id(model: type[T], entity_id: int) -> Maybe[T]:
     column_name = model.__name__.lower() + "_id"
+    if column_name == "targettype_id":
+        column_name = "target_type_id"
     with session_maker() as session:
         res = Maybe.from_optional(session.query(model).filter(getattr(model, column_name) == entity_id).first())
         return res
