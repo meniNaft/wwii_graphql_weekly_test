@@ -8,11 +8,8 @@ T = TypeVar('T')
 
 
 def find_by_id(model: type[T], entity_id: int) -> Maybe[T]:
-    column_name = model.__name__.lower() + "_id"
-    if column_name == "targettype_id":
-        column_name = "target_type_id"
     with session_maker() as session:
-        res = Maybe.from_optional(session.query(model).filter(getattr(model, column_name) == entity_id).first())
+        res = Maybe.from_optional(session.query(model).filter(getattr(model, get_primary_key_name(model)) == entity_id).first())
         return res
 
 
@@ -48,19 +45,20 @@ def insert_range(entities: List[T]) -> Result[List[T], str]:
 def update(model: type[T], entity_id: int, updated_entity: T) -> Result[T, str]:
     with session_maker() as session:
         try:
-            maybe_entity = find_by_id(model, entity_id)
-            if maybe_entity is Nothing:
+            entity_to_update = find_by_id(model, entity_id).value_or(None)
+            if not entity_to_update:
                 return Failure(f"No {model.__name__} with id: {entity_id} found")
-            entity_to_update = maybe_entity.unwrap()
 
             for key, value in updated_entity.__dict__.items():
-                if key != 'id':
+                if key != get_primary_key_name(model) and key in model.__dict__:
                     setattr(entity_to_update, key, value)
+
             session.commit()
             return Success(entity_to_update)
         except SQLAlchemyError as e:
             session.rollback()
             return Failure(str(e))
+
 
 
 def delete(model: type[T], entity_id: int) -> Result[T, str]:
@@ -76,3 +74,10 @@ def delete(model: type[T], entity_id: int) -> Result[T, str]:
         except SQLAlchemyError as e:
             session.rollback()
             return Failure(str(e))
+
+
+def get_primary_key_name(model: type[T]):
+    primary_key_name = model.__name__.lower() + "_id"
+    if primary_key_name == "targettype_id":
+        primary_key_name = "target_type_id"
+    return primary_key_name
